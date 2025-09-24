@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Do you love Sam?</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#ffd166;--muted:#94a3b8}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#071025 0%, #00131f 100%);color:#eef2ff}
+    .card{width:100%;max-width:760px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));border-radius:18px;padding:36px;box-shadow:0 10px 30px rgba(2,6,23,0.6);text-align:center}
+    h1{font-size:clamp(20px,4vw,34px);margin:0 0 8px}
+    p.lead{color:var(--muted);margin:0 0 26px}
+
+    .btn-row{display:flex;gap:18px;justify-content:center;align-items:center}
+    button.btn{appearance:none;border:0;padding:14px 28px;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;transform-origin:center;transition:transform .15s ease, box-shadow .15s ease}
+    button.yes{background:linear-gradient(90deg,#ff7eb3,#ffd166);color:#081021;box-shadow:0 6px 18px rgba(255,168,130,0.18)}
+    button.no{background:transparent;border:2px solid rgba(255,255,255,0.08);color:#e6eef8}
+
+    /* proposal screen */
+    .proposal{display:none;padding-top:12px}
+    .ring{font-size:120px;display:inline-block;line-height:1;transform:translateY(0);transition:transform .4s ease}
+    .proposal h2{margin:12px 0 6px;font-size:28px}
+    .proposal p{color:var(--muted);margin:0 0 18px}
+
+    .accept{background:linear-gradient(90deg,#7ee8fa,#80ff72);color:#052016}
+    .decline{background:transparent;border:2px solid rgba(255,255,255,0.06)}
+
+    .hidden{display:none}
+
+    /* celebration */
+    .confetti{position:fixed;inset:0;pointer-events:none;display:none}
+    .confetti .c{position:absolute;width:10px;height:16px;opacity:0.9}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+    @media (max-width:520px){.ring{font-size:72px}}
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>Hey Samyukthaa — a question for you 💌</h1>
+   
+    <div id="question" aria-live="polite">
+      <div class="btn-row">
+        <button id="yesBtn" class="btn yes" aria-label="Yes I love Sam">Yes</button>
+        <button id="noBtn" class="btn no" aria-label="No">No</button>
+      </div>
+    </div>
+
+    <div id="proposal" class="proposal" aria-hidden="true">
+      <div style="margin-top:6px">
+        <div class="ring" aria-hidden="true">💍</div>
+      </div>
+      <h2>Will you marry me, <span id="name">Samyukthaa</span>?</h2>
+      <p>One small answer could change our lives 💖</p>
+      <div class="btn-row">
+        <button id="acceptBtn" class="btn accept">Yes, a thousand times yes 💍</button>
+        <button id="declineBtn" class="btn decline">Need time</button>
+      </div>
+      <footer>Made with love by Sam</footer>
+    </div>
+
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const proposal = document.getElementById('proposal');
+    const question = document.getElementById('question');
+    const acceptBtn = document.getElementById('acceptBtn');
+    const declineBtn = document.getElementById('declineBtn');
+    const ring = document.querySelector('.ring');
+
+    // track scale of yes button (starts at 1)
+    let yesScale = 1;
+
+    // clicking YES shows the proposal page
+    yesBtn.addEventListener('click', ()=>{
+      question.style.display = 'none';
+      proposal.style.display = 'block';
+      proposal.setAttribute('aria-hidden','false');
+      // tiny ring pop
+      ring.style.transform = 'translateY(-6px) scale(1.02)';
+      setTimeout(()=> ring.style.transform = 'translateY(0) scale(1)', 500);
+    });
+
+    // clicking NO increases the YES button size each press
+    noBtn.addEventListener('click', ()=>{
+      yesScale *= 1.12; // grows ~12% each press
+      // cap maximum so it's not insane but keep it large
+      yesScale = Math.min(yesScale, 8);
+      yesBtn.style.transform = `scale(${yesScale})`;
+      // make the yes button more prominent with shadow and brief wiggle
+      yesBtn.style.boxShadow = '0 12px 28px rgba(255,168,130,0.22)';
+      yesBtn.animate([
+        { transform: `scale(${yesScale}) rotate(-6deg)` },
+        { transform: `scale(${yesScale}) rotate(6deg)` },
+        { transform: `scale(${yesScale}) rotate(0deg)` }
+      ], { duration: 500 });
+    });
+
+    // When accept on proposal: show a simple celebration
+    acceptBtn.addEventListener('click', ()=>{
+      acceptBtn.disabled = true;
+      acceptBtn.textContent = 'Yay! 💖';
+      launchConfetti();
+    });
+
+    declineBtn.addEventListener('click', ()=>{
+      declineBtn.textContent = 'Okay :)';
+      declineBtn.disabled = true;
+    });
+
+    // Simple confetti implementation (no external libs)
+    function launchConfetti(){
+      const confetti = document.getElementById('confetti');
+      confetti.style.display = 'block';
+      const colors = ['#ffd166','#06d6a0','#118ab2','#ef476f','#ffd6a5'];
+      for(let i=0;i<80;i++){
+        const el = document.createElement('div');
+        el.className = 'c';
+        el.style.left = Math.random()*100 + '%';
+        el.style.top = '-10vh';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.transform = `rotate(${Math.random()*360}deg)`;
+        el.style.width = (6 + Math.random()*12) + 'px';
+        el.style.height = (8 + Math.random()*16) + 'px';
+        confetti.appendChild(el);
+        // fall animation
+        const fall = el.animate([
+          { transform: el.style.transform + ' translateY(0) rotate(0deg)', opacity:1 },
+          { transform: el.style.transform + ' translateY(110vh) rotate(720deg)', opacity:0.8 }
+        ], { duration: 2600 + Math.random()*1200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+        fall.onfinish = ()=> el.remove();
+      }
+      // hide confetti area after a while
+      setTimeout(()=> confetti.style.display = 'none', 4000);
+    }
+
+    // small accessibility: allow keyboard use
+    yesBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter') yesBtn.click(); });
+    noBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter') noBtn.click(); });
+
+  </script>
+</body>
+</html>
